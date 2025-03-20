@@ -162,6 +162,7 @@ func (c *PrometheusAlertController) PrometheusAlert() {
 	}
 
 	var message string
+	title := beego.AppConfig.String("title")
 	if pMsg.Type != "" && PrometheusAlertTpl != nil {
 		//判断是否是来自 Prometheus的告警
 		if pMsg.Split != "false" && PrometheusAlertTpl.Tpluse == "Prometheus" {
@@ -181,6 +182,7 @@ func (c *PrometheusAlertController) PrometheusAlert() {
 				go SetRecord(AlertValue)
 				//提取 prometheus 告警消息中的 label，用于和告警路由比对
 				xalert := AlertValue.(map[string]interface{})
+				title = xalert["labels"].(map[string]interface{})["alertname"].(string)
 				//路由处理,可能存在多个路由都匹配成功，所以这里返回的是个列表sMsg
 				Return_pMsgs := AlertRouterSet(xalert, pMsg, PrometheusAlertTpl.Tpl)
 				for _, Return_pMsg := range Return_pMsgs {
@@ -194,7 +196,7 @@ func (c *PrometheusAlertController) PrometheusAlert() {
 						message = err.Error()
 					} else {
 						//发送消息
-						message = SendMessagePrometheusAlert(msg, &Return_pMsg, logsign)
+						message = SendMessagePrometheusAlert(title, msg, &Return_pMsg, logsign)
 					}
 
 				}
@@ -209,7 +211,7 @@ func (c *PrometheusAlertController) PrometheusAlert() {
 				message = err.Error()
 			} else {
 				//发送消息
-				message = SendMessagePrometheusAlert(msg, &pMsg, logsign)
+				message = SendMessagePrometheusAlert(title, msg, &pMsg, logsign)
 			}
 		}
 
@@ -443,8 +445,9 @@ func TransformAlertMessage(p_json interface{}, tpltext string) (error error, msg
 }
 
 // 发送消息
-func SendMessagePrometheusAlert(message string, pmsg *PrometheusAlertMsg, logsign string) string {
-	Title := beego.AppConfig.String("title")
+func SendMessagePrometheusAlert(title string, message string, pmsg *PrometheusAlertMsg, logsign string) string {
+	// Title := beego.AppConfig.String("title")
+	Title := title
 	var ReturnMsg string
 	models.AlertsFromCounter.WithLabelValues("/prometheusalert").Add(1)
 	ChartsJson.Prometheusalert += 1

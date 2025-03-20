@@ -2,7 +2,8 @@ FROM golang:1.20.6-alpine3.18 as builder
 
 WORKDIR $GOPATH/src/github.com/feiyu563/PrometheusAlert
 
-RUN apk update && \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
     apk add --no-cache gcc g++ sqlite-libs make git
 
 ENV GO111MODULE on
@@ -18,7 +19,8 @@ FROM alpine:3.18
 
 LABEL maintainer="jikun.zhang"
 
-RUN apk update && \
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+    apk update && \
     apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
